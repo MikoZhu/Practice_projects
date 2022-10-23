@@ -9,6 +9,7 @@
 <body>
   
     <form action="/students/edit/<%=data.id%>?_method=PUT" method="POST">
+        <!-- 注意path/符号 以及/> -->
         <label for="id">ID:</label>
         <input type="number" id="id" name="id" value="<%=data.id%>" />
         <label for="name">Name:</label>
