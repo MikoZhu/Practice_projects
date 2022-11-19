@@ -5,21 +5,27 @@ const mongoose = require("mongoose")
 const cookieParser = require("cookie-parser")
 const session = require("express-session")
 const flash = require("connect-flash")
+const bodyParser = require("body-parser")
+const User = require("./models/user")
+const bcrypt = require("bcrypt")
+const saltRounds = 10
 
 //middleware
 app.set("view engine","ejs")
+
+
 app.use(cookieParser(process.env.SECRET))
 app.use(session({
     secret:process.env.SECRET,
     resave:false,
-    saveUninitialized:true,
+    saveUninitialized:false,
 }))
 
 app.use(flash())
+app.use(bodyParser.urlencoded({extended:true}))
 
 mongoose    
     .connect("mongodb://localhost:27017/test",{
-        useFindAndModify:false,
         useNewUrlParser:true,
         useUnifiedTopology:true,
 
@@ -32,14 +38,11 @@ mongoose
     })
 
 app.get("/",(req,res)=>{
-   req.flash("success_msg","Successfully get to the homepage.")
-
-   res.send("Hi, " + req.flash("success_msg"))
+   res.send("Home page")
 })    
 
-app.get("/verifyuser",(req,res)=>{
-    req.session.isVerified = true
-    res.send("You are verified")
+app.get("/signup",(req,res)=>{
+    res.render("signup")
 })
 
 app.get("/secret",(req,res)=>{
@@ -50,38 +53,55 @@ app.get("/secret",(req,res)=>{
     }
 })
 
-const monkeySchema = new mongoose.Schema({
-    name:{
-        type:String,
-        minlength:5,
-    }
-
+app.get("/login",(req,res)=>{
+    res.render("login")
 })
-// create a model, is like a table in SQL
-const Monkey = mongoose.model("Monkey",monkeySchema)
 
-app.get("/", async(req,res,next)=>{
-    try{ 
-       await Monkey.findOneAndUpdate(
-        {name:"Benson K."}, 
-        {name:"Benson Kelly"},
-        {new:true, runValidators:true},
-        (err,doc)=>{
-            if (err){
-                res.send(err)
-            }else{
-                console.log(doc)
-                res.send(doc)
-                console.log("should print.")
-            }
-            }
-        ) //there is an error in findOneAndUpdate  
-    } catch(e){
-        console.log(e)
+app.post("/login",async(req,res)=>{
+    let {username,password}=req.body
+    try {
+        let foundUser = await User.findOne({username})
+        console.log(foundUser)
+        if (foundUser && password == foundUser.password ){
+            res.render("secret")
+        }else{
+            res.send ("Username or password not correct")
+        }
+    } catch (e){
         next(e)
-    }
-  
+    }   
 })
+
+app.post("/signup",(req,res,next)=>{
+    let {username,password} = req.body
+    //use hash function 
+    bcrypt.genSalt(saltRounds,(err,salt) =>{
+        if (err){
+            next(err)
+        }
+        console.log(salt)
+        bcrypt.hash(password,salt,(err,hash)=>{
+            if (err){
+                next(err)
+            }
+            console.log(hash)
+            let newUser = new User({username,password:hash})
+            try{
+                newUser
+                .save()
+                .then(()=>{
+                    res.send("Data has been saved.")
+                })
+                .catch((e)=>{
+                    res.send("Error")
+            })
+        } catch(err){
+            next(err)
+        }
+        })
+    })
+})
+
 
 //防止别人乱打一通
 app.get("/*",(req,res)=>{
