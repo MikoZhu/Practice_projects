@@ -26,10 +26,11 @@ app.use(bodyParser.urlencoded({extended:true}))
 
 mongoose    
     .connect("mongodb://localhost:27017/test",{
+        useFindAndModify:false,   
         useNewUrlParser:true,
         useUnifiedTopology:true,
-
-    })
+    }
+    )
     .then(()=>{
         console.log("Connected to mongodb.")
     })
