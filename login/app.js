@@ -90,9 +90,14 @@ app.post("/login",async(req,res)=>{
     }   
 })
 
-app.post("/signup",(req,res,next)=>{
+app.post("/signup", async(req,res,next)=>{
     let {username,password} = req.body
-    //use hash function 
+    try{
+        let foundUser = await User.findOne({username})
+        if (foundUser){
+            res.send("Username has been taken. Please change a new email.")
+        } else{
+            //use hash function 
     bcrypt.genSalt(saltRounds,(err,salt) =>{
         if (err){
             next(err)
@@ -118,6 +123,12 @@ app.post("/signup",(req,res,next)=>{
         }
         })
     })
+        }
+    } catch (err){
+        next (err)
+    }
+    
+    
 })
 
 
