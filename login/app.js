@@ -93,6 +93,7 @@ app.post("/login",async(req,res)=>{
 app.post("/signup", async(req,res,next)=>{
     let {username,password} = req.body
     try{
+        //if user save the same username
         let foundUser = await User.findOne({username})
         if (foundUser){
             res.send("Username has been taken. Please change a new email.")
