@@ -80,12 +80,12 @@ app.post("/signup",(req,res,next)=>{
         if (err){
             next(err)
         }
-        console.log(salt)
+        console.log("Salt is " + salt)
         bcrypt.hash(password,salt,(err,hash)=>{
             if (err){
                 next(err)
             }
-            console.log(hash)
+            console.log("Hash is " + hash)
             let newUser = new User({username,password:hash})
             try{
                 newUser
