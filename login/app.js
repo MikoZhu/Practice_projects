@@ -62,12 +62,29 @@ app.post("/login",async(req,res)=>{
     let {username,password}=req.body
     try {
         let foundUser = await User.findOne({username})
-        console.log(foundUser)
-        if (foundUser && password == foundUser.password ){
-            res.render("secret")
-        }else{
-            res.send ("Username or password not correct")
+        //if username cannot be found in db or type the wrong email address,
+        //it will exist error
+        if (foundUser) {
+            bcrypt.compare(password,foundUser.password,(err,result)=>{
+                if (err){
+                    next (err)
+                }
+                if (result ===true){
+                    res.render("secret")
+                } else{
+                    res.send("Username or password is not correct.")
+                }
+            })
+        }else {
+            res.send("Username or password is not correct.")
         }
+      
+        // console.log(foundUser)
+        // if (foundUser && password == foundUser.password ){
+        //     res.render("secret")
+        // }else{
+        //     res.send ("Username or password not correct")
+        // }
     } catch (e){
         next(e)
     }   
@@ -80,12 +97,12 @@ app.post("/signup",(req,res,next)=>{
         if (err){
             next(err)
         }
-        console.log("Salt is " + salt)
+        // console.log("Salt is " + salt)
         bcrypt.hash(password,salt,(err,hash)=>{
             if (err){
                 next(err)
             }
-            console.log("Hash is " + hash)
+            // console.log("Hash is " + hash)
             let newUser = new User({username,password:hash})
             try{
                 newUser
