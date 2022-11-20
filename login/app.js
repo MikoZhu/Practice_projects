@@ -24,6 +24,14 @@ app.use(session({
 app.use(flash())
 app.use(bodyParser.urlencoded({extended:true}))
 
+// set require of login
+const requireLogin = (req,res,next)=>{
+    if (!req.session.isVerfied ==true){
+        res.redirect("login")
+    }else{
+        next()
+    }
+}
 mongoose    
     .connect("mongodb://localhost:27017/test",{
         useFindAndModify:false,   
@@ -46,12 +54,8 @@ app.get("/signup",(req,res)=>{
     res.render("signup")
 })
 
-app.get("/secret",(req,res)=>{
-    if (req.session.isVerified == true){
-        res.send("Here is my sēcret - I love panda.")
-    }else{
-        res.status(403).send("You are not authorized to see my secret.") //403禁止查看网页内容
-    }
+app.get("/secret",requireLogin,(req,res)=>{
+        res.render("secret")
 })
 
 app.get("/login",(req,res)=>{
@@ -70,7 +74,8 @@ app.post("/login",async(req,res)=>{
                     next (err)
                 }
                 if (result ===true){
-                    res.render("secret")
+                    req.session.isVerfied = true
+                    res.redirect("secret")
                 } else{
                     res.send("Username or password is not correct.")
                 }
@@ -93,7 +98,7 @@ app.post("/login",async(req,res)=>{
 app.post("/signup", async(req,res,next)=>{
     let {username,password} = req.body
     try{
-        //if user save the same username
+       //if user save the same username
         let foundUser = await User.findOne({username})
         if (foundUser){
             res.send("Username has been taken. Please change a new email.")
